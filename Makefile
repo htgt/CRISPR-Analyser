@@ -16,15 +16,18 @@ all: server crispr_analyser
 
 server: mongoose $(SERVER_OBJECTS)
 	@echo " Linking ots_server"
+	mkdir -p bin
 	$(CC) $(CXXFLAGS) -o bin/ots_server -Wl,-rpath='$$ORIGIN/../lib' $(SERVER_OBJECTS) $(LIB)
 
 mongoose:
 	@echo " Building mongoose"
 	mkdir -p include
+	mkdir -p lib
 	$(MAKE) -C $(MONGOOSEDIR) linux && mv $(MONGOOSEDIR)/libmongoose.so lib && cp $(MONGOOSEDIR)/mongoose.h include/
 
 crispr_analyser: $(FINDER_OBJECTS)
 	@echo " Linking crispr_analyser"
+	mkdir -p bin
 	$(CC) $(CXXFLAGS) $^ -o bin/crispr_analyser
 
 $(BUILDDIR)/mongcpp.o: $(MONGOOSEDIR)/mongcpp.cpp
