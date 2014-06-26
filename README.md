@@ -20,6 +20,40 @@ The initial load time of the index will depend entirely on the speed of the disk
 
 Once the application has loaded all the CRISPRs into memory it usually takes 2-4 seconds to find all off targets with up to 4 mismatches for a gRNA. The program can be easily modified to check for more than 4 mismatches, but it was not feasible for us to store off targets with any more than 4 mismatches in our database.
 
+##Database
+You will want to create a postgres database to store the actual CRISPR data, here is our CRISPR table:
+
+```sql
+CREATE TABLE crisprs (
+    id SERIAL PRIMARY KEY,
+    chr_name text NOT NULL,
+    chr_start integer NOT NULL,
+    seq text NOT NULL,
+    pam_right boolean NOT NULL,
+    species_id integer NOT NULL,
+    off_target_ids integer[],
+    off_target_summary text,
+);
+```
+
+To have multiple species you should leave this is a parent table with no rows, and make a child table for each species, e.g.:
+
+```sql
+CREATE TABLE crisprs_human (
+    CHECK ((species_id = 1))
+)
+INHERITS (crisprs);
+```
+
+You will also want some indexes/constraints:
+
+```sql
+ALTER TABLE ONLY crisprs_human ADD CONSTRAINT crisprs_mouse_unique_loci UNIQUE (chr_start, chr_name, pam_right);
+CREATE INDEX idx_crisprs_mouse_loci ON crisprs_mouse USING btree (chr_name, chr_start);
+```
+
+You can see how to populate this table in the next section
+
 ##Build
 The actual build step is very simple, and simply requires running make:
 
@@ -34,18 +68,42 @@ But before the program can be used you must create an index:
 ###Find all CRISPRs within the genome
 Unfortunately this is the hardest part at the moment because I haven't had time to re-write my original script I generated from eons ago. When I get time this script will be added as a command inside crispr_analyser
 
-This step produces a .tsv of all CRISPRs in a given genome, which can be run directly into a psql copy statement to quickly add rows to a table.
+This step produces a .csv of all CRISPRs in a given genome, which can be run directly into a psql copy statement to quickly add rows to a table.
 
 For now you will have to get this script
 
-[]()
+[https://github.com/htgt/Crisprs/blob/master/cpp/get_all_crisprs.cpp](https://github.com/htgt/Crisprs/blob/master/cpp/get_all_crisprs.cpp)
+
+Compile it with:
+
+```
+g++ -std=c++0x -O3 -W -Wall get_all_crisprs.cpp
+```
+
+Then run:
+
+```
+get_all_crisprs <species_id> /location/of/genome.fa > /var/tmp/out.csv
+```
+
+where species_id is whatever you have assigned in your database. It should probably be 1.
+
+You can then load this into your database:
+
+```
+\copy crisprs_human(chr_name, chr_start, seq, pam_right, species_id) from '/lustre/scratch109/sanger/ah19/human_crisprs_fixed.csv' with delimiter ',';
+```
+
+and now you can create an index.
 
 ###Create index
 Once you have generated the tsv file(s) you can give them to the crispr_analyser index command with the -i flag:
 
 ```
-./bin/crispr_analyser index -i /lustre/scratch109/sanger/ah19/chr1-10_crisprs_new.csv -i /lustre/scratch109/sanger/ah19/chr11_onwards_crisprs_new.csv -o /lustre/scratch109/sanger/ah19/crisprs_human.bin -s Human -a GRCh37 -e 1
+./bin/crispr_analyser index -i /lustre/scratch109/sanger/ah19/GRCh37.tsv -o /lustre/scratch109/sanger/ah19/crisprs_human.bin -s Human -a GRCh37 -e 1
 ```
+
+*Note*: the -i flag can be set multiple times to read from many input files 
 
 The other options:
 
