@@ -48,10 +48,10 @@ using namespace std;
 
 int usage() {
     fprintf(stderr, "\n");
-    fprintf(stderr, "Program: find_off_targets\n");
+    fprintf(stderr, "Program: crispr_analyser\n");
     fprintf(stderr, "Contact: Alex Hodgkins <ah19@sanger.ac.uk>\n");
     fprintf(stderr, "\n");
-    fprintf(stderr, "Usage: find_off_targets <command> [options]\n");
+    fprintf(stderr, "Usage: crispr_analyser <command> [options]\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "Command: index      Create binary index of all CRISPRs\n");
     fprintf(stderr, "         align      Find potential off targets for CRISPRs\n");
@@ -59,16 +59,16 @@ int usage() {
     fprintf(stderr, "\n\n");
     fprintf(stderr, "Example end to end usage:\n");
     fprintf(stderr, "Create index:\n");
-    fprintf(stderr, "\tfind_off_targets index -i human_chr1-11.csv -i human_chr12_on.csv -o index.bin\n");
+    fprintf(stderr, "\tcrispr_analyser index -i human_chr1-11.csv -i human_chr12_on.csv -o index.bin\n");
     fprintf(stderr, "Calculate off targets for single CRISPR:\n");
-    fprintf(stderr, "\tfind_off_targets align 873245 > crispr_data.tsv\n");
+    fprintf(stderr, "\tcrispr_analyser align 873245 > crispr_data.tsv\n");
 
     return 1;
 }
 
 int index_usage() {
     fprintf(stderr, "\n");
-    fprintf(stderr, "Usage: find_off_targets index [options]\n");
+    fprintf(stderr, "Usage: crispr_analyser index [options]\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "Options: -o FILE    The file to put the binary index to\n");
     fprintf(stderr, "         -i FILE    Input file of CSV crispr data (multiple -i flags can be specified)\n");
@@ -78,7 +78,7 @@ int index_usage() {
     fprintf(stderr, "         -f INT     Offset - the database offset this species has (default 0)");
     fprintf(stderr, "\n");
     fprintf(stderr, "Example usage:\n");
-    fprintf(stderr, "find_off_targets index -i ~/human_chr1-11.csv -i ~/human_chr12_on.csv -o ~/index.bin");
+    fprintf(stderr, "crispr_analyser index -i ~/human_chr1-11.csv -i ~/human_chr12_on.csv -o ~/index.bin");
     fprintf(stderr, " -s Human -a GRCh37 -e 1\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "Note: the input to this option is a csv file of CRISPR data");
@@ -89,7 +89,7 @@ int index_usage() {
 
 int align_usage() {
     fprintf(stderr, "\n");
-    fprintf(stderr, "Usage: find_off_targets align [options] <ids>\n");
+    fprintf(stderr, "Usage: crispr_analyser align [options] <ids>\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "Options: -i FILE    The file containing the CRISPR index, (from the index step)\n");
     fprintf(stderr, "         -s int     The CRISPR range start\n");
@@ -98,11 +98,11 @@ int align_usage() {
     fprintf(stderr, "Note:\n");
     fprintf(stderr, "You can specify a list of ids, OR specify a range of CRISPRs. ");
     fprintf(stderr, "For example:\n\n");
-    fprintf(stderr, "./find_off_targets align -s 43275 -n 1000\n");
+    fprintf(stderr, "./crispr_analyser align -s 43275 -n 1000\n");
     fprintf(stderr, "  This will calculate off targets for 1000 crisprs,\n");
     fprintf(stderr, "  the ids of which will be 43275-44725\n");
     fprintf(stderr, "\n\n");
-    fprintf(stderr, "find_off_targets align 873245 923577 237587 109583\n");
+    fprintf(stderr, "crispr_analyser align 873245 923577 237587 109583\n");
     fprintf(stderr, "  This will calculate off targets for the given 4 CRISPRs\n");
 
     return 1;
@@ -110,14 +110,14 @@ int align_usage() {
 
 int search_usage() {
     fprintf(stderr, "\n");
-    fprintf(stderr, "Usage: find_off_targets search [options] <ids>\n");
+    fprintf(stderr, "Usage: crispr_analyser search [options] <ids>\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "Options: -i FILE    The file containing the CRISPR index, (from the index step)\n");
     fprintf(stderr, "         -s int     The CRISPR sequence to search for (must be 20bp)\n");
     fprintf(stderr, "         -p int     Placement of the PAM relative to the sequence. Default is to ignore PAM\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "For example:\n\n");
-    fprintf(stderr, " find_off_targets search -i /lustre/scratch109/sanger/ah19/crispr_indexes/GRCm38_index.bin -s GTGTCAGTGAAACTTACTCT\n\n");
+    fprintf(stderr, " crispr_analyser search -i /lustre/scratch109/sanger/ah19/crispr_indexes/GRCm38_index.bin -s GTGTCAGTGAAACTTACTCT\n\n");
 
     return 1;
 }

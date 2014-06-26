@@ -7,12 +7,12 @@ BUILDDIR:=build
 MONGOOSEDIR:=vpiotr-mongoose-cpp
 SOURCES:=$(shell find $(SRCDIR) -type f -name *.cpp)
 OBJECTS:=$(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.cpp=.o))
-SERVER_OBJECTS:=$(BUILDDIR)/mongcpp.o $(filter-out build/find_off_targets.o, $(OBJECTS))
+SERVER_OBJECTS:=$(BUILDDIR)/mongcpp.o $(filter-out build/crispr_analyser.o, $(OBJECTS))
 FINDER_OBJECTS:=$(filter-out build/ots_server.o, $(OBJECTS))
 
 #TODO: build OffTargetServer separate of ots_server
 
-all: server find_off_targets
+all: server crispr_analyser
 
 server: mongoose $(SERVER_OBJECTS)
 	@echo " Linking ots_server"
@@ -23,9 +23,9 @@ mongoose:
 	mkdir -p include
 	$(MAKE) -C $(MONGOOSEDIR) linux && mv $(MONGOOSEDIR)/libmongoose.so lib && cp $(MONGOOSEDIR)/mongoose.h include/
 
-find_off_targets: $(FINDER_OBJECTS)
-	@echo " Linking find_off_targets"
-	$(CC) $(CXXFLAGS) $^ -o bin/find_off_targets
+crispr_analyser: $(FINDER_OBJECTS)
+	@echo " Linking crispr_analyser"
+	$(CC) $(CXXFLAGS) $^ -o bin/crispr_analyser
 
 $(BUILDDIR)/mongcpp.o: $(MONGOOSEDIR)/mongcpp.cpp
 	@echo " Building mongoose c++ bindings"

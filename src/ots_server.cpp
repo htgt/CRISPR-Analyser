@@ -32,7 +32,7 @@
     g++ -c -W -Wall -pthread mongcpp.cpp
 
     Make sure its working by compiling mongotest:
-    g++ -W -Wall -pthread -ldl -o mongotest mongcpp.o ots_mongoose.cpp -L. -lmongoose
+    g++ -W -Wall -pthread -ldl -o mongotest mongcpp.o ots_server.cpp -L. -lmongoose
 */
 
 #include <sys/types.h>
@@ -319,7 +319,11 @@ protected:
 
 int usage() {
     fprintf(stderr, "\n");
-    fprintf(stderr, "Usage: ots_mongoose [options]\n");
+    fprintf(stderr, "Program: ots_server\n");
+    fprintf(stderr, "Contact: Alex Hodgkins <ah19@sanger.ac.uk>\n");
+    fprintf(stderr, "Description: A server version of the crispr_analyser that responds to JSON requests\n");
+    fprintf(stderr, "\n");
+    fprintf(stderr, "Usage: ots_server [options]\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "Options: -t INT     The number of threads the server should use. Default is 5\n");
     fprintf(stderr, "         -p INT     The port to run the server on\n");
