@@ -83,12 +83,12 @@ g++ -std=c++0x -O3 -W -Wall get_all_crisprs.cpp
 Then run:
 
 ```
-get_all_crisprs <species_id> /location/of/genome.fa > /var/tmp/out.csv
+get_all_crisprs <species_id> /location/of/genome.fa > /lustre/scratch109/sanger/ah19/human_crisprs_fixed.csv
 ```
 
 where species_id is whatever you have assigned in your database. It should probably be 1.
 
-You can then load this into your database:
+You can then load this into your database in psql:
 
 ```
 \copy crisprs_human(chr_name, chr_start, seq, pam_right, species_id) from '/lustre/scratch109/sanger/ah19/human_crisprs_fixed.csv' with delimiter ',';
@@ -97,7 +97,7 @@ You can then load this into your database:
 and now you can create an index.
 
 ###Create index
-Once you have generated the tsv file(s) you can give them to the crispr_analyser index command with the -i flag:
+Once you have generated the csv file(s) above you can give them to the crispr_analyser index command with the -i flag:
 
 ```
 ./bin/crispr_analyser index -i /lustre/scratch109/sanger/ah19/GRCh37.tsv -o /lustre/scratch109/sanger/ah19/crisprs_human.bin -s Human -a GRCh37 -e 1
@@ -127,7 +127,7 @@ If you are storing the CRISPRs in a database, all CRISPRs must have a unique ID 
 For example, to add the second species you should start the CRISPR ids in your database at 300,000,001 and set -f to 300,000,000:
 
 ```
-./crispr_analyser index -i /lustre/scratch109/sanger/ah19/mouse_first_10_fixed.tsv -i /lustre/scratch109/sanger/ah19/mouse_after_10_fixed.tsv -o /lustre/scratch109/sanger/ah19/GRCm38_index.bin -s Mouse -a GRCm38 -e 2 -f 300000000
+./bin/crispr_analyser index -i /lustre/scratch109/sanger/ah19/mouse_first_10_fixed.tsv -i /lustre/scratch109/sanger/ah19/mouse_after_10_fixed.tsv -o /lustre/scratch109/sanger/ah19/GRCm38_index.bin -s Mouse -a GRCm38 -e 2 -f 300000000
 ```
 
 Meaning 300,000,000 should be subtracted from whatever ID is given to get a species localised ID, as 300,000,001 here corresponds to Mouse CRISPR 1
@@ -135,10 +135,51 @@ Meaning 300,000,000 should be subtracted from whatever ID is given to get a spec
 ##Usage
 
 ###Retrieve an ID given a gRNA
+You can find all possible ids for a given gRNA with the search command:
+
+```
+./bin/crispr_analyser search -i /lustre/scratch109/sanger/ah19/crispr_indexes/GRCh37_index.bin -s GTGTCAGTGAAACTTACTCT
+```
+
+Which outputs:
+<pre>
+Loaded 298539596 sequences
+Loading took 2.230000 seconds
+Found 1 exact matches
+Scanning took 0.840000 seconds
+Found the following matches:
+	245377736
+</pre>
 
 ###Find off targets
+Finding off targets requires IDs rather than sequence:
 
-###Run the server
+```
+./bin/crispr_analyser search -i /lustre/scratch109/sanger/ah19/crispr_indexes/GRCh37_index.bin 245377736 345345636 245373336 
+```
+
+With as many ids as necessary separated by a space.
+
+A range mode is also supported:
+```
+./bin/crispr_analyser align -s 245377736 -n 1000
+```
+
+This will output off target data for ids 245377736-245377836
+
+The off target data looks like this:
+<pre>
+245377736	1	{2500136,2872353,6251446,...,290706188,293805107,294577530}	{0: 1, 1: 0, 2: 0, 3: 9, 4: 126}
+</pre>
+
+Which is TSV data with 4 columns:
+
+1. CRISPR ID
+2. Species ID
+3. Postgres array of CRISPR IDs
+4. YAML off target summary data string
+
+With the intention being that the output fields are dumped straight into your database
 
 ##Server Usage
 The server supports returns JSON or JSONP if a callback is given. 
@@ -147,6 +188,27 @@ The server has two modes of operation:
 
 1. Finding off targets given an id (or ids)
 2. Retrieving an id given a single 20bp gRNA sequence
+
+###Start the server
+The server currently only supports human and mouse genomes which are added with the -l and -m flags respectively:
+
+```
+./bin/ots_server -l /lustre/scratch109/sanger/ah19/crispr_indexes/GRCh37_index.bin -m /lustre/scratch109/sanger/ah19/crispr_indexes/GRCm38_index.bin
+```
+
+But a new species flag can easily be added. 
+
+The full options:
+<pre>
+         -t INT     The number of threads the server should use. Default is 5
+         -p INT     The port to run the server on
+         -l FILE    The file containing the human CRISPR index
+         -m FILE    The file containing the mouse CRISPR index
+         -s         Load the default mouse/crispr indexes (sanger only)
+         -d         Daemon mode
+</pre>
+
+If you are at sanger the -s option will load our genome indexes for mouse and human that are world viewable on lustre. 
 
 ###Off target searching
 To find off targets there are two required parameters:
