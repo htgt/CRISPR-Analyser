@@ -117,7 +117,7 @@ int search_usage() {
     fprintf(stderr, "         -p int     Placement of the PAM relative to the sequence. Default is to ignore PAM\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "For example:\n\n");
-    fprintf(stderr, " crispr_analyser search -i /lustre/scratch109/sanger/ah19/crispr_indexes/GRCm38_index.bin -s GTGTCAGTGAAACTTACTCT\n\n");
+    fprintf(stderr, " crispr_analyser search -i /lustre/scratch109/sanger/ah19/crispr_indexes/GRCh37_index.bin -s GTGTCAGTGAAACTTACTCT\n\n");
 
     return 1;
 }
@@ -218,6 +218,14 @@ int search(int argc, char * argv[]) {
     CrisprUtil finder = CrisprUtil();
     finder.load_binary( index );
     finder.search_by_seq( seq, pam_right, matches );
+
+    if ( matches.size() ) { 
+        cout << "Found the following matches:" << endl;
+
+        for ( uint i = 0; i < matches.size(); ++i ) {
+            cout << "\t" << matches[i] << endl; 
+        }
+    }
 
     return 1;
 }
