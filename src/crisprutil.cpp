@@ -122,6 +122,10 @@ void CrisprUtil::search_by_seq(string seq, short pam_right, vector<uint64_t> & o
     query.seq = util::string_to_bits( cmap, seq, pam_right ? 1 : 0 );
     query.rev_seq = util::revcom( query.seq, crispr_data.seq_length );
 
+    //if they put in a load of Zs or something then just return now don't bother looping
+    if ( query.seq == ERROR_STR )
+        throw runtime_error("Query sequence contains invalid characters");
+
     //default is to not modify the pam (bitwise or with 0 doesnt change anything)
     //but if pam_right is two we want to allow both, so we change it to a 1
     uint64_t force_pam = 0;
