@@ -72,7 +72,7 @@ This step produces a .csv of all CRISPRs in a given genome, which can be run dir
 
 For now you will have to get this script
 
-[https://github.com/htgt/Crisprs/blob/master/cpp/get_all_crisprs.cpp](https://github.com/htgt/Crisprs/blob/master/cpp/get_all_crisprs.cpp)
+[https://github.com/htgt/Crisprs/blob/alex/cpp/get_all_crisprs.cpp](https://github.com/htgt/Crisprs/blob/alex/cpp/get_all_crisprs.cpp)
 
 Compile it with:
 
