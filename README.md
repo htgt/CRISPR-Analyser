@@ -77,7 +77,7 @@ For now you will have to get this script
 Compile it with:
 
 ```
-g++ -std=c++0x -O3 -W -Wall get_all_crisprs.cpp
+g++ -std=c++0x -O3 -W -Wall -o get_all_crisprs get_all_crisprs.cpp
 ```
 
 Then run:
