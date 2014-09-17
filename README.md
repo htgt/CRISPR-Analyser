@@ -48,7 +48,7 @@ INHERITS (crisprs);
 You will also want some indexes/constraints:
 
 ```sql
-ALTER TABLE ONLY crisprs_human ADD CONSTRAINT crisprs_mouse_unique_loci UNIQUE (chr_start, chr_name, pam_right);
+ALTER TABLE ONLY crisprs_mouse ADD CONSTRAINT crisprs_mouse_unique_loci UNIQUE (chr_start, chr_name, pam_right);
 CREATE INDEX idx_crisprs_mouse_loci ON crisprs_mouse USING btree (chr_name, chr_start);
 ```
 
