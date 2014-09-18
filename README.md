@@ -52,6 +52,13 @@ ALTER TABLE ONLY crisprs_mouse ADD CONSTRAINT crisprs_mouse_unique_loci UNIQUE (
 CREATE INDEX idx_crisprs_mouse_loci ON crisprs_mouse USING btree (chr_name, chr_start);
 ```
 
+If you are using inheritance each timeyou add a new species crispr table you need to add a primary key:
+```sql
+alter table crisprs_dog add constraint crisprs_dog_pkey primary key (id);
+```
+
+Or finding a CRISPR by ID will run incredibly slowly.
+
 You can see how to populate this table in the next section
 
 ##Build
