@@ -197,25 +197,29 @@ The server has two modes of operation:
 2. Retrieving an id given a single 20bp gRNA sequence
 
 ###Start the server
-The server currently only supports human and mouse genomes which are added with the -l and -m flags respectively:
-
+The server comes with a config file in conf/indexes.conf. You will want to edit this to add whatever species you would like to load. The format is species = index_file, like so:
 ```
-./bin/ots_server -l /lustre/scratch109/sanger/ah19/crispr_indexes/GRCh37_index.bin -m /lustre/scratch109/sanger/ah19/crispr_indexes/GRCm38_index.bin
+human = /lustre/scratch110/sanger/team87/crispr_indexes/GRCh37_index.bin
 ```
 
-But a new species flag can easily be added. 
+A # can be used at the start of the line for it to be ignored.
+
+The server can be started with just the -c option:
+```
+./bin/ots_server -c conf/indexes.conf
+```
+Which will start a server with 5 threads on port 8080
 
 The full options:
 <pre>
          -t INT     The number of threads the server should use. Default is 5
-         -p INT     The port to run the server on
-         -l FILE    The file containing the human CRISPR index
-         -m FILE    The file containing the mouse CRISPR index
-         -s         Load the default mouse/crispr indexes (sanger only)
+         -p INT     The port to run the server on. Default is 8080
+         -c FILE    The file containing the species and their index files
+                    See conf/indexes.conf for an example
          -d         Daemon mode
 </pre>
 
-If you are at sanger the -s option will load our genome indexes for mouse and human that are world viewable on lustre. 
+If you are at sanger using the default config file should be fine as our indexes are world viewable on lustre. 
 
 ###Off target searching
 To find off targets there are two required parameters:

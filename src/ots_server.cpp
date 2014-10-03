@@ -50,6 +50,7 @@
 #include "crisprutil.h"
 #include "utils.h"
 #include "lastaccessed.h"
+#include "serverconfig.h"
 
 using namespace mongoose;
 using namespace std;
@@ -95,8 +96,11 @@ public:
         string loaded_species = crispr_util[species]->species();
         util::lc(loaded_species);
 
-        if ( loaded_species != species )
-            throw runtime_error("'" + loaded_species + "' does not match user specified species " + species);
+        if ( loaded_species != species ) {
+            //this is now only a warning as the Grch38 index has species human
+            cerr << "WARNING: '" << loaded_species << "' does not match user specified species " << species << endl;
+            //throw runtime_error("'" + loaded_species + "' does not match user specified species " + species);
+        }
 
         cerr << species << " index loaded" << endl;
     }
@@ -325,11 +329,10 @@ int usage() {
     fprintf(stderr, "\n");
     fprintf(stderr, "Usage: ots_server [options]\n");
     fprintf(stderr, "\n");
-    fprintf(stderr, "Options: -t INT     The number of threads the server should use. Default is 5\n");
-    fprintf(stderr, "         -p INT     The port to run the server on\n");
-    fprintf(stderr, "         -l FILE    The file containing the human CRISPR index\n");
-    fprintf(stderr, "         -m FILE    The file containing the mouse CRISPR index\n");
-    fprintf(stderr, "         -s         Load the default mouse/crispr indexes (sanger only)\n");
+    fprintf(stderr, "Options: -t INT     The number of threads the server should use (default 5)\n");
+    fprintf(stderr, "         -p INT     The port to run the server on (default 8080)\n");
+    fprintf(stderr, "         -c FILE    The file containing the species and their index files\n");
+    fprintf(stderr, "                    See conf/indexes.conf for an example\n");
     fprintf(stderr, "         -d         Daemon mode\n");
     fprintf(stderr, "\n");
 
@@ -339,33 +342,42 @@ int usage() {
 int main(int argc, char * argv[]) {
     string num_threads = "5"; //this has to be a string for some reason
     string port        = "8080";
+    string config_file; //default file is in conf
 
-    bool default_opts = false;
     bool daemon = false;
-    string human_index, mouse_index;
     int c = -1;
-    while ( (c = getopt(argc, argv, "t:p:l:m:sd")) != -1 ) {
+    while ( (c = getopt(argc, argv, "t:p:c:d")) != -1 ) {
         switch ( c ) {
             case 't': num_threads  = optarg; break;
             case 'p': port         = optarg; break;
-            case 'l': human_index  = optarg; break;
-            case 'm': mouse_index  = optarg; break;
-            case 's': default_opts = true; break;
+            case 'c': config_file  = optarg; break;
             case 'd': daemon       = true; break;
             case '?': return usage();
         }
     }
 
-    if ( default_opts ) {
-        human_index = "/lustre/scratch109/sanger/team87/crispr_indexes/GRCh37_index.bin";
-        mouse_index = "/lustre/scratch109/sanger/team87/crispr_indexes/GRCm38_index.bin";
+    if ( config_file.empty() ) {
+        cerr << "ERROR: No config file specified. A sample config can be found in config/indexes.conf\n";
+        return usage();
     }
-    else { 
-        if ( human_index.empty() && mouse_index.empty() ) {
-            cerr << "You must specify at least 1 index to load, or use -s to use the default indexes in /lustre" << endl;
-            return usage();
-        }
+
+    //attempt to load the file specified which should map genomes
+    ServerConfig config( config_file );
+    OffTargetServer server;
+
+    //load all the index files specified in the
+    for ( auto it = config.data.begin(); it != config.data.end(); ++it ) {
+        //it->first has the species id and it->second has the file location
+        server.load_index(it->first, it->second);
     }
+
+    cerr << "Loaded " << config.data.size() << " indexes" << endl;
+
+    server.setOption("document_root", "html");
+    server.setOption("listening_ports", port);
+    server.setOption("num_threads", num_threads);
+
+    cerr << "Starting server with " << num_threads << " threads on port " << port << endl;
 
     if ( daemon ) {
         cerr << "Launching daemon" << endl;
@@ -392,17 +404,6 @@ int main(int argc, char * argv[]) {
         close(STDOUT_FILENO);
         close(STDERR_FILENO);
     }
-
-    OffTargetServer server;
-
-    if ( ! human_index.empty() ) server.load_index("human", human_index);
-    if ( ! mouse_index.empty() ) server.load_index("mouse", mouse_index);
-
-    server.setOption("document_root", "html");
-    server.setOption("listening_ports", port);
-    server.setOption("num_threads", num_threads);
-
-    cerr << "Starting server with " << num_threads << " threads on port " << port << endl;
 
     server.start();
 
