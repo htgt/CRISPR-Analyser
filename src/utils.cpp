@@ -5,7 +5,16 @@
 #include <sstream>
 #include <bitset>
 #include <climits>
+#include <stdexcept>
+#include <deque>
 #include "utils.h"
+
+//add a case to the std::to_string so we dont get errors when passing in a string
+namespace std {
+    string to_string(const string & str) {
+        return str;
+    }
+}
 
 namespace util {
 
@@ -121,6 +130,53 @@ namespace util {
         }
 
         return reversed;
+    }
+
+    //we only need this for the PAM site so no point adding all the weird characters
+    std::string revcom(std::string text) {
+        std::string rev( text.size(), 'N' );
+        int j = 0;
+        for ( std::string::reverse_iterator it = text.rbegin(); it != text.rend(); ++it ) {
+            switch( *it ) {
+                case 'A': rev[j++] = 'T'; break;
+                case 'T': rev[j++] = 'A'; break;
+                case 'G': rev[j++] = 'C'; break;
+                case 'C': rev[j++] = 'G'; break;
+                //maybe i'll support these later
+                // case 'R': rev[j++] = 'Y'; break;
+                // case 'Y': rev[j++] = 'R'; break;
+                // case 'S': rev[j++] = 'S'; break;
+                // case 'W': rev[j++] = 'W'; break;
+                // case 'K': rev[j++] = 'M'; break;
+                // case 'M': rev[j++] = 'K'; break;
+                // case 'B': rev[j++] = 'V'; break;
+                // case 'V': rev[j++] = 'B'; break;
+                // case 'D': rev[j++] = 'H'; break;
+                // case 'H': rev[j++] = 'D'; break;
+                default: throw std::runtime_error("Sequence contains non ACGT characters");
+            }
+        }
+
+        return rev;
+    }
+
+    //should be a template really
+    bool valid_pam_right(std::deque<char> & seq, std::string pam) { return valid_pam(seq, pam, true); }
+    bool valid_pam_left(std::deque<char> & seq, std::string pam) { return valid_pam(seq, pam, false); }
+
+    //we store sequence in a deque, this will extract a pam sequence
+    bool valid_pam(std::deque<char> & seq, std::string pam, bool pam_right) {
+        int start = pam_right ? seq.size() - pam.size() : 0;
+
+        //pull out the pam region from the deque
+        for ( std::string::size_type i = 0; i < pam.size(); ++i ) {
+            if ( seq[start+i] != pam[i] ) return false;
+        }
+
+        //we could in theory here allow an R or whatever
+
+        //none of the bases mismatched, so its a valid pam
+        return true;
     }
 }
 

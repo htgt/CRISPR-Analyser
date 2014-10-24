@@ -15,6 +15,14 @@ The code for the website is on github:
 
 https://github.com/htgt/WGE
 
+It would also be possible to have a databaseless website by modifying the crispr index to include a start position and chromosome, then just have a javascript page that drives the server. 
+
+If you have any issues/feature requests please create an issue on github. If you use the code or our website in any scientific work please cite:
+
+```
+Bin Shen, Wensheng Zhang, Jun Zhang, Jiankui Zhou, Jianying Wang, Li Chen, Lu Wang, Alex Hodgkins, Vivek Iyer, Xingxu Huang & William C Skarnes (2014) Efficient genome modification by CRISPR-Cas9 nickase with minimal off-target effects. doi:10.1038/nmeth.2857
+```
+
 ##Speed
 The initial load time of the index will depend entirely on the speed of the disk you store it on. An index will be 2-3gb which is _all_ loaded into memory; for us this usually takes about 5 seconds per index. This is quite high if you are searching for a single CRISPR at a time, so generally I recommend using the server so you only have to load the index once.
 
@@ -73,41 +81,31 @@ make
 But before the program can be used you must create an index:
 
 ###Find all CRISPRs within the genome
-Unfortunately this is the hardest part at the moment because I haven't had time to re-write my original script I generated from eons ago. When I get time this script will be added as a command inside crispr_analyser
+This has now been integrated into the crispr_analyser under the 'gather' command. Run './bin/crispr_analyser gather' to see all possible options
 
-This step produces a .csv of all CRISPRs in a given genome, which can be run directly into a psql copy statement to quickly add rows to a table.
+This step produces a .csv of all CRISPRs in a given genome, which can be run directly into a psql copy statement to quickly add rows to a table. The output .csv file is used in the next step to generate the index. Once the index has been created and the rows inserted into your database this file can be deleted.
 
-For now you will have to get this script
-
-[https://github.com/htgt/Crisprs/blob/alex/cpp/get_all_crisprs.cpp](https://github.com/htgt/Crisprs/blob/alex/cpp/get_all_crisprs.cpp)
-
-Compile it with:
+The step can be run like so:
 
 ```
-g++ -std=c++0x -O3 -W -Wall -o get_all_crisprs get_all_crisprs.cpp
+./bin/crispr_analyser gather -i ~/Homo_sapiens.GRCh38_15.fa -o ~/GRCh38_crisprs.csv -e 1
 ```
 
-Then run:
-
-```
-get_all_crisprs <species_id> /location/of/genome.fa > /lustre/scratch109/sanger/ah19/human_crisprs_fixed.csv
-```
-
-where species_id is whatever you have assigned in your database. It should probably be 1.
+Where -e is the species id that you will set in your database, -i is the input genome in fasta format, and -o is where you want to output the csv. If you don't know what the species id should be it's probably 1.
 
 You can then load this into your database in psql:
 
 ```
-\copy crisprs_human(chr_name, chr_start, seq, pam_right, species_id) from '/lustre/scratch109/sanger/ah19/human_crisprs_fixed.csv' with delimiter ',';
+\copy crisprs_human(chr_name, chr_start, seq, pam_right, species_id) from '~/GRCh38_crisprs.csv' with delimiter ',';
 ```
 
-and now you can create an index.
+and now you can create an index:
 
 ###Create index
 Once you have generated the csv file(s) above you can give them to the crispr_analyser index command with the -i flag:
 
 ```
-./bin/crispr_analyser index -i /lustre/scratch109/sanger/ah19/GRCh37.tsv -o /lustre/scratch109/sanger/ah19/crisprs_human.bin -s Human -a GRCh37 -e 1
+./bin/crispr_analyser index -i ~/GRCh38_crisprs.csv -o /lustre/scratch109/sanger/ah19/GRCh38_crisprs.bin -s Human -a GRCh37 -e 1
 ```
 
 *Note*: the -i flag can be set multiple times to read from many input files 
@@ -123,6 +121,8 @@ The other options:
 </pre>
 
 You can now skip to the usage section unless you want to use more than 1 species
+
+Note: Each CRISPR in the index sits inside a 64bit integer, 40 bits are used to store the CRISPR and a single bit is used to store the strand (what we call pam_right). This leaves 23 bits in which you could store additional information about the crispr if you so chose (but I would recommend leaving at least 1 bit untouched because invalid crisprs are marked with all 64 bits set to 1.
 
 #####Indexing a second species
 If you are storing the CRISPRs in a database, all CRISPRs must have a unique ID so to add a second species you must add one more flag:
@@ -162,7 +162,7 @@ Found the following matches:
 Finding off targets requires IDs rather than sequence:
 
 ```
-./bin/crispr_analyser search -i /lustre/scratch109/sanger/ah19/crispr_indexes/GRCh37_index.bin 245377736 345345636 245373336 
+./bin/crispr_analyser align -i /lustre/scratch109/sanger/ah19/crispr_indexes/GRCh37_index.bin 245377736 345345636 245373336 
 ```
 
 With as many ids as necessary separated by a space.
@@ -259,6 +259,15 @@ Which will return the following wrapped in a callback:
 
 #####Multiple IDs:
 [http://localhost:8080/api/off_targets?ids=245377726,245377730&species=human]([http://localhost:8080/api/off_targets?ids=245377726,245377730&species=human)
+
+###Get the sequence for a given ID
+Thanks to coronin for writing this method. If you don't want to set up a database, you can have the ots server give you the sequence for a given CRISPR using the id api call like so:
+
+```
+$.getJSON('http://localhost:8080/api/id?callback=?', {ids: "245377736", species: "human"}, function (d) { console.log(d); });
+```
+
+Multiple ids can be specified by providing a comma separated string as in the off target example above.
 
 ###Sequence searching
 Sequence searching works in a very similar way:

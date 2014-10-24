@@ -58,7 +58,7 @@ using namespace std;
 int done = 0;
 
 void sig_handler(int sig) {
-    cerr << "Received signal " << util::to_string(sig) << ", exiting" << endl;
+    cerr << "Received signal " << to_string(sig) << ", exiting" << endl;
     done = 1;
 }
 
@@ -148,6 +148,10 @@ protected:
                 try {
                     if ( uri == string("/api/search") ) {
                         result = search_json(request);
+                        res = true;
+                    }
+                    else if ( uri == string("/api/id") ) {
+                        result = id_json(request);
                         res = true;
                     }
                     else if ( uri == string("/api/off_targets") ) {
@@ -247,10 +251,10 @@ protected:
         get_matches(request, matches);
 
         //result += "<br />Seq is: " + seq;
-        result += "<br />Found " + util::to_string(matches.size()) + " matches:";
+        result += "<br />Found " + to_string(matches.size()) + " matches:";
 
         for ( uint i = 0; i < matches.size(); i++ ) {
-            result += "<br />" + util::to_string(matches[i]);
+            result += "<br />" + to_string(matches[i]);
         }
 
 
@@ -262,6 +266,29 @@ protected:
         get_matches(request, matches);
 
         return util::to_json_array(matches);
+    }
+
+    const string id_json(const MongooseRequest& request) {
+        vector<string> seqs;
+        string ids_text, species;
+        request.getVar("ids", ids_text);
+        request.getVar("species", species);
+
+        if ( ids_text.empty() )
+            throw runtime_error("Please provide ids as a comma separated string");
+        if ( species.empty() )
+            throw runtime_error("Please provide a species");
+
+        util::lc(species);
+        vector<string> ids = util::split(ids_text);
+
+        //should maybe change this to return an object of { id: sequence }
+        for ( vector<string>::size_type i = 0; i < ids.size(); i++ ) {
+            cerr << "Getting sequence for " << ids[i] << " (" << species << ")\n";
+            seqs.push_back( "'" + get_util(species)->get_crispr( stoull(ids[i]) ) + "'" );
+        }
+
+        return util::to_json_array(seqs);
     }
 
     const string find_off_targets(const MongooseRequest& request) {
@@ -283,7 +310,7 @@ protected:
 
         vector<string> ids = util::split(ids_text);
 
-        for ( uint64_t i = 0; i < ids.size(); i++ ) {
+        for ( vector<string>::size_type i = 0; i < ids.size(); i++ ) {
             ids_all.push_back( stoull(ids[i]) );
         }
 
@@ -291,12 +318,13 @@ protected:
 
         for ( uint i = 0; i < offs.size(); ++i ) {
             if ( i > 0 ) result += ",";
-            result += "\"" + util::to_string(offs[i].id) + "\":" + util::to_string(offs[i]);
+            //we use my to_string here as its a struct we want a string of
+            result += "\"" + to_string(offs[i].id) + "\":" + util::to_string(offs[i]);
         }
 
         result += "}";
 
-        //result = "Got data for " + util::to_string(offs.size()) + " crisprs";
+        //result = "Got data for " + to_string(offs.size()) + " crisprs";
 
         return result;
     }

@@ -4,8 +4,13 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <deque>
 
 #define ERROR_STR 0xFFFFFFFFFFFFFFFFull
+
+namespace std {
+    string to_string(const string & str);
+}
 
 namespace util {
     //unsigned int pop_count(uint64_t x);
@@ -14,7 +19,11 @@ namespace util {
     std::string bits_to_string(uint64_t text, int size);
     uint64_t string_to_bits(uint8_t * cmap, const std::string & seq, short base);
     uint64_t revcom(uint64_t text, int size);
+    std::string revcom(std::string text);
     void lc(std::string & str);
+    bool valid_pam_left(std::deque<char> & seq, std::string pam);
+    bool valid_pam_right(std::deque<char> & seq, std::string pam);
+    bool valid_pam(std::deque<char> & seq, std::string pam, bool pam_right);
 
 /**
  * @brief Count the number of bits set to 1 in a given 64bit integer
@@ -44,7 +53,6 @@ namespace util {
  * Implemented here because templates suck. otherwise I'd have to declare
  * every type I support manually
  *
- * @warning apparently stringstreams are slow
  *
  * @param begin          iterator begin, pointing to a container
  * @param end            iterator end
@@ -53,28 +61,34 @@ namespace util {
  * @return JSON string
  */
     template <typename T>
-    std::string array_to_string(T begin, T end, bool include_idx) {
-        std::ostringstream oss;
-
+    std::string format_off_targets(const T & list) {
         //if its empty return
-        if ( begin == end )
-            return oss.str();
+        if ( list.empty() )
+            return "{}";
 
-        oss << "{" << (include_idx ? "0: " : "")  << *(begin++);
+        //to make sure we don't have to re-allocate memory we reserve enough
+        //space for the whole string.
+
+        //each entry in list has a minimum of '0: 1,' which is 5 characters
+        //more realistically it will be something like '4: 9999,' which is 8
+        //plus {} which is 2
+        //so this gives us a good approximation of the size
+        std::string result = "{";
+        result.reserve( (list.size()*8) + 2 );
 
         //iterate over array, appending each value to the string
-        for ( int i = 1; begin < end; ++i ) {
-            oss << ",";
-            if ( include_idx )
-                oss << " " << i << ": ";
-            oss << *(begin++);
+        uint64_t index = 0;
+        for ( auto it = list.begin(); it != list.end(); ++it ) {
+            result.append(std::to_string(index++)).append(": ").append( std::to_string( *it ) );
+            if (index != list.size()) result.append(", ");
         }
 
-        oss << "}";
+        result += "}";
 
-        return oss.str();
+        return result;
     }
 
+    //useful for structs so you can override the <<
     template <class T>
     inline std::string to_string (const T & t) {
         std::stringstream ss;
@@ -83,15 +97,28 @@ namespace util {
     }
 
     template <typename T>
-    std::string to_json_array(const T & list) {
+    std::string to_json_array(const T & list, bool quote_all = false) {
         std::string result = "[";
 
-        for ( uint64_t i = 0; i < list.size(); i++ ) {
-            result += to_string(list[i]);
+        for ( size_t i = 0; i < list.size(); ++i ) {
+            std::string temp = std::to_string(list[i]);
+            //quote all would be set to true if you were passing in strings
+            result += quote_all ? "'"+temp+"'" : temp;
             if ( i != list.size()-1 ) result += ",";
         }
 
         result += "]";
+
+        return result;
+    }
+
+    template <typename T>
+    std::string container_to_string(const T & list) {
+        std::string result(list.size(), '-');
+
+        for ( size_t i = 0; i < list.size(); ++i ) {
+            result[i] = list[i];
+        }
 
         return result;
     }

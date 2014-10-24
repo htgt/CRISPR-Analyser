@@ -10,6 +10,7 @@
 #include <ctime>
 #include <climits>
 #include <map>
+#include <deque>
 
 #include "utils.h"
 #include "crisprutil.h"
@@ -25,6 +26,7 @@ CrisprUtil::CrisprUtil() {
 
     //populate the array we use to map char -> int
     _populate_cmap();
+    _populate_smap();
 
     //cerr << bits_to_string( crisprs[263164224], 20 ) << "\n";
 }
@@ -40,11 +42,31 @@ void CrisprUtil::_populate_cmap() {
     cmap['t'] = cmap['T'] = 3; //11
 }
 
+void CrisprUtil::_populate_smap() {
+    // fill space table
+    std::fill(&smap[0], &smap[sizeof(cmap)/sizeof(smap[0])], 0);
+    for ( unsigned int i = 0; i < 256; ++i )
+        if ( isspace(i) )
+            smap[i] = 1;
+}
+
 //return a crispr sequence string
 string CrisprUtil::get_crispr(uint64_t id) {
+    //make sure load_binary has been called
+    if ( crispr_data.num_seqs == 0 )
+        throw runtime_error( "CRISPRs must be loaded before calling get_crispr" );
+
+    //the id we get needs to be localised to our 0 based array - spotted by Liang Cai
+    id -= crispr_data.offset;
+
+    if ( id >= crispr_data.num_seqs )
+        throw runtime_error( "Index out of range" );
+
     return util::bits_to_string( get_crispr_int(id), crispr_data.seq_length );
 }
 
+//returns our 2bit representation of a crispr, mostly this will be given straight
+//to the bits_to_string method
 uint64_t CrisprUtil::get_crispr_int(uint64_t id) {
     //make sure load_binary has been called
     if ( crispr_data.num_seqs == 0 )
@@ -174,6 +196,112 @@ void CrisprUtil::search_by_seq(string seq, short pam_right, vector<uint64_t> & o
     //cerr << "Skipped " << total_error << " sequences" << endl;
 
     fprintf( stderr, "Scanning took %f seconds\n", ((float)t)/CLOCKS_PER_SEC );
+}
+
+//do speed comparison with crispr string
+void CrisprUtil::print_crispr_row(ofstream & out, deque<char> & crispr, string & seqname, int64_t start, bool pam_right, int species_id) {
+    //format is X,34759384,GTCATGCAATCGATCGATCGCGG,1,1
+    out << seqname << "," << start << ","; //chr
+    //display seq
+    for ( auto it=crispr.begin(); it != crispr.end(); ++it ) {
+        out << *it;
+    }
+
+    out << "," << pam_right << "," << species_id << '\n';
+}
+
+void CrisprUtil::parse_genome(const string & filename, const string & outfile, int species_id, string pam) {
+    cerr << "Loading genome from:\n" << filename << "\n";
+    ifstream text( filename );
+    ofstream out ( outfile );
+
+    if ( ! out.is_open() ) {
+        cerr << "Error opening output file: " << outfile << endl;
+        throw runtime_error("Failed to open output file");
+    }
+    if ( ! text.is_open() ) {
+        cerr << "Error opening input file: " << filename << endl;
+        throw runtime_error("Failed to open input file");
+    }
+
+    clock_t t = clock();
+
+    string rev_pam = util::revcom( pam );
+    deque<char> current (23, 'N');
+    string seqname, line;
+    int64_t seqpos = 0;
+    int64_t patlen = 23; //should allow this to be configurable?
+    uint64_t total = 0;
+
+    //will need to process the pam here and make it a bit version
+
+    while ( getline(text, line) ) {
+        if ( ! line.size() ) continue;
+
+        //if its a header line reset everything then go to the next line
+        if ( line[0] == '>' ) {
+            //take any text up to the first space (or the end if there's no space)
+            //we go from 1 instead of 0 as we don't want the > character
+            string::size_type first = line.find(" ");
+            if ( first != string::npos )
+                seqname = line.substr(1, first-1); //-1 as we start at 1 not 0
+            else
+                seqname = line.substr(1, line.size()-1);
+
+            //if it has chr in it then strip it as we don't want those redundant
+            //characters 300m times
+            if ( seqname.find("Chr") == 0 || seqname.find("chr") == 0 )
+                seqname = seqname.substr(3, seqname.size()-1);
+
+            //reset seqpos to start of chromosome
+            seqpos = 0;
+
+            cerr << "Processing chromosome " << seqname << endl;
+            continue;
+        }
+
+        //iterate through every sequence character on the line
+        for ( string::size_type i = 0; i < line.size(); ++i ) {
+            uint8_t const c = line[i];
+
+            //skip if its a whitespace character
+            if ( smap[c] )
+                continue;
+
+            //push off whatever base is at the start, and append our new base at the end
+            //can't be bothered storing it in an int as we want more than just
+            //the few characters in the cmap, this isn't that efficient but whatever
+            current.pop_front();
+            current.push_back(c);
+
+            //if we have a full pattern length worth of text we can start
+            //checking for crisprs
+            if ( ++seqpos >= patlen ) {
+                int64_t seq_start = seqpos - patlen;
+
+                //its possible a crispr is both a valid pam left and a valid pam right
+                //crispr, in which case we will print it twice.
+                //we add +1 to the seq_start so its on ensembl coords rather than ucsc
+                if ( util::valid_pam_left( current, rev_pam ) ) {
+                    total++;
+                    print_crispr_row(out, current, seqname, seq_start+1, false, species_id);
+                }
+
+                if ( util::valid_pam_right( current, pam ) ) {
+                    total++;
+                    print_crispr_row(out, current, seqname, seq_start+1, true, species_id);
+                }
+            }
+
+        }
+    }
+
+    out.close();
+    text.close();
+
+
+    t = clock() - t;
+    fprintf( stderr, "Gathering CRISPRs took %f seconds\n", ((float)t)/CLOCKS_PER_SEC );
 }
 
 void CrisprUtil::load_binary(const string & filename) {
@@ -424,18 +552,13 @@ vector<ots_data_t> CrisprUtil::_find_off_targets(vector<crispr_t> queries, bool 
 
             //add the json array of off target ids or empty array
             if ( total_matches < max_offs ) {
-                ots_data.off_targets = util::array_to_string(off_targets.begin(), off_targets.end(), 0);
-                //convert {} to [] as we want JSON here
-                ots_data.off_targets.front() = '[';
-                ots_data.off_targets.back() = ']';
+                ots_data.off_targets = util::to_json_array(off_targets);
             }
             else {
                 ots_data.off_targets = "[]";
             }
 
-
-
-            ots_data.off_target_summary = util::array_to_string(summary.begin(), summary.end(), 1);
+            ots_data.off_target_summary = util::format_off_targets(summary);
             results.push_back(ots_data);
             continue;
         }
@@ -446,13 +569,13 @@ vector<ots_data_t> CrisprUtil::_find_off_targets(vector<crispr_t> queries, bool 
 
         //print off targets
         if ( total_matches < max_offs ) {
-            cout << util::array_to_string(off_targets.begin(), off_targets.end(), 0) << "\t";
+            cout << util::to_json_array(off_targets) << "\t";
         }
         else {
             cout << "\\N\t"; //standard NULL is a \N
         }
 
-        cout << util::array_to_string(summary.begin(), summary.end(), 1) << "\n";
+        cout << util::format_off_targets(summary) << "\n";
     }
 
     t = clock() - t;

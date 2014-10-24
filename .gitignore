@@ -6,3 +6,6 @@ include/*
 #ignore compiled executables
 bin/*
 vpiotr-mongoose-cpp/mongoose
+
+#ignore data files
+*.bin
