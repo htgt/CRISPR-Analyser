@@ -70,6 +70,7 @@ class CrisprUtil {
         void text_to_binary(const std::vector<std::string> & infiles, const std::string & outfile, metadata_t * data);
         void load_metadata(std::ifstream & text);
         void search_by_seq(std::string seq, short pam_right, std::vector<uint64_t> & output);
+        std::string off_targets_by_seq(std::string seq, bool pam_right);
         void print_crispr_row(std::ofstream & out, std::deque<char> & crispr, std::string & seqname, int64_t start, bool pam_right, int species_id);
 };
 
