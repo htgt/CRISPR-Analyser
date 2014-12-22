@@ -7,6 +7,7 @@ use Log::Log4perl qw( :easy );
 use UUID::Tiny ':std';
 use autodie;
 use feature qw( say );
+use Pod::Usage;
 
 use IPC::System::Simple qw( run );
 use Try::Tiny;
@@ -148,3 +149,64 @@ sub run_batch {
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+wge_off_targets.pl - find and persist off-targets for a given list of ids
+
+=head1 SYNOPSIS
+
+wge_off_targets.pl <species> <ids.txt>
+
+Environment variables used:
+WGE_REST_CLIENT_CONFIG - The location of the file with database details
+The above config file is required.
+
+GRCM38_CRISPR_INDEX - the location of the GRCm38 CRISPR index
+GRCH37_CRISPR_INDEX - the location of the GRCh37 CRISPR index
+GRCH38_CRISPR_INDEX - the location of the GRCh38 CRISPR index
+SSCROFA_CRISPR_INDEX - the location of the pig CRISPR index
+
+You only need to set one of the above - whichever species you will use
+
+OFF_TARGET_RUN_DIR - The working directory of this script, it will create sub directories here
+OFF_TARGET_LOG_DIR - Where to place any log output
+
+You will also need 'WGE::Util::PersistCrisprs::TSV' in your lib. This should be
+extracted out somewhere maybe?
+
+Example usage:
+
+wge_off_targets.pl human /var/tmp/crispr_ids_1.txt
+
+=head1 DESCRIPTION
+
+If you are farming this then I recommend having 7000~ CRISPRs per job, otherwise
+you will run over the normal time limit and the job will be killed.
+
+If you have a big list of ids I do the following to farm the job:
+
+perl command_to_generate_lots_of_ids.pl > /lustre/scratch110/sanger/ah19/ids/huge_list_of_ids.txt
+cd /lustre/scratch110/sanger/ah19/ids/
+perl ~/work/CRISPR-Analyser/bin/split.pl huge_list_of_ids.txt
+bsub -J "ots[1-630]%80" \
+     -q normal \
+     -o "/lustre/scratch110/sanger/ah19/ots_logs/ots_output.%J.%I.txt" \
+     -M 3000 \
+     -R 'select[mem>3000] rusage[mem=3000]' \
+     -G team87-grp \
+     perl ~/work/CRISPR-Analyser/bin/wge_off_targets.pl Human /lustre/scratch110/sanger/ah19/ids/crisprs_\$LSB_JOBINDEX
+
+That will create a job array with 630 jobs, running 80 at a time outputting the log data to
+/lustre/scratch110/sanger/ah19/ots_logs/. Output folders will be deleted unless there's a problem,
+when it has finished check the dir set in your OFF_TARGET_RUN_DIR environment variable.
+Any jobs that failed will still be there, or run 'bjobs -A' and see which jobs finished
+with a status of EXIT
+
+=head AUTHOR
+
+Alex Hodgkins
+
+=cut
