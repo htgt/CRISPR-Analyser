@@ -3,8 +3,9 @@ build
 lib/*
 include/*
 
-#ignore compiled executables
+#ignore compiled executables, allow perl files
 bin/*
+!bin/*.pl
 vpiotr-mongoose-cpp/mongoose
 
 #ignore data files
