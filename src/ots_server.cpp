@@ -45,6 +45,7 @@
 #include <signal.h>
 #include <stdexcept>
 #include <unistd.h>
+#include <cstdio>
 
 #include "mongcpp.h"
 #include "crisprutil.h"
@@ -158,6 +159,10 @@ protected:
                         result = find_off_targets(request);
                         res = true;
                     }
+                    else if ( uri == string("/api/off_targets_by_seq") ) {
+                        result = off_targets_by_seq(request);
+                        res = true;
+                    }
                     else {
                         cerr << "Couldn't find api URI " << uri << endl;
                     }
@@ -266,6 +271,36 @@ protected:
         get_matches(request, matches);
 
         return util::to_json_array(matches);
+    }
+
+    const string off_targets_by_seq(const MongooseRequest& request) {
+        string result;
+        string sequence;
+        string species;
+        string pam_right_param;
+        vector<uint64_t> matches;
+        bool pam_right;
+        string jason_result;
+
+        request.getVar("seq", sequence);
+        request.getVar("species", species);
+        request.getVar("pam_right", pam_right_param);
+
+        pam_right = false;
+        if ( pam_right_param == "true" ) {
+            pam_right = true;
+        }
+        else if ( pam_right_param == "false" ) {
+            pam_right = false;
+        }
+        else {
+             throw runtime_error("pam_right must be the string true or false");
+        }
+
+        result = get_util(species)->off_targets_by_seq( sequence, pam_right);
+        jason_result = "{ \"data\": \"" + result + "\" }";
+
+        return jason_result;
     }
 
     const string id_json(const MongooseRequest& request) {
