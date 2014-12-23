@@ -113,6 +113,15 @@ namespace util {
     }
 
     template <typename T>
+    std::string to_postgres_array(const T & list, bool quote_all = false) {
+        std::string result = to_json_array(list, quote_all);
+        result.front() = '{';
+        result.back() = '}';
+
+        return result;
+    }
+
+    template <typename T>
     std::string container_to_string(const T & list) {
         std::string result(list.size(), '-');
 

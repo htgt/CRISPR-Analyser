@@ -40,7 +40,8 @@ $(BUILDDIR)/%.o: $(SRCDIR)/%.cpp
 	$(CC) $(CXXFLAGS) -c -Iinclude -o $@ $<
 
 clean:
-	rm -rf bin/*
+	rm -rf bin/ots_server
+	rm -rf bin/crispr_analyser
 	rm -rf build
 	rm -rf lib/*
 	rm -rf include/*

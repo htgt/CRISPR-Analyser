@@ -606,7 +606,7 @@ vector<ots_data_t> CrisprUtil::_find_off_targets(vector<crispr_t> queries, bool 
 
         //print off targets
         if ( total_matches < max_offs ) {
-            cout << util::to_json_array(off_targets) << "\t";
+            cout << util::to_postgres_array(off_targets) << "\t";
         }
         else {
             cout << "\\N\t"; //standard NULL is a \N
