@@ -543,7 +543,7 @@ vector<ots_data_t> CrisprUtil::_find_off_targets(vector<crispr_t> queries, bool 
 
         uint64_t total_matches = 0;
 
-        cerr << "Finding off targets for " << queries[i].id << endl;
+        cerr << "Finding off targets for " << queries[i].id+crispr_data.offset << endl;
 
         //iterate over every crispr checking for of targets
         for ( uint64_t j = 1; j <= crispr_data.num_seqs; j++ ) {
