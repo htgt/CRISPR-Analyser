@@ -68,8 +68,8 @@ int gather_usage() {
     fprintf(stderr, "\n");
     fprintf(stderr, "Usage: crispr_analyser gather [options]\n");
     fprintf(stderr, "\n");
-    fprintf(stderr, "Options: -i FILE    Input file of CSV crispr data (multiple -i flags can be specified)\n");
-    fprintf(stderr, "         -o FILE    The file to put the binary index to\n");
+    fprintf(stderr, "Options: -i FILE    Input file of a genome .fa file\n");
+    fprintf(stderr, "         -o FILE    The file to put the TSV CRISPR data to\n");
     fprintf(stderr, "         -p TEXT    PAM recognition sequence (default GG)\n");
     fprintf(stderr, "         -e INT     Species ID - the species ID that your database uses");
     fprintf(stderr, "\n");
