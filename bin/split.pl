@@ -14,6 +14,8 @@ GetOptions(
     'start-index=i' => \$file_index,
 ) or pod2usage( 2 );
 
+pod2usage( 2 ) unless @ARGV;
+
 my $fh;
 my $current_line = 0;
 while ( my $line = <> ) {
