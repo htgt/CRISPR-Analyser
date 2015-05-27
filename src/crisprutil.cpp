@@ -464,16 +464,15 @@ vector<ots_data_t> CrisprUtil::find_off_targets(vector<uint64_t> ids, bool store
    return  _find_off_targets( queries, store_offs );
 }
 
-std::string CrisprUtil::off_targets_by_seq(std::string seq, bool pam_right) {
+ots_data_t CrisprUtil::off_targets_by_seq(std::string seq, bool pam_right) {
 
 /*
  * 1) create a crispr_t structure for the sequence and revcom of the query string
  * by converting the query sequence to integer form (using method in utils.cpp)
  * and revcomping that integer.
  * 2) pass that into _find_off_targets, which returns a vector of off-target site (ots) data structures
- * 3) pull out the off_target_summary string from the ots_data_t
- * 4) add that to result string and return from this method
- * 5) check that the query crispr sequence length is 20 bases 
+ * 3) return the first ots data structure
+ * 4) check that the query crispr sequence length is 20 bases
  *
  *
  */
@@ -482,7 +481,7 @@ std::string CrisprUtil::off_targets_by_seq(std::string seq, bool pam_right) {
     vector<ots_data_t> vodt;
     ots_data_t first_ot;
     std::string ret_string = "None";
-/* 
+/*
  * cmap is a public attribute of CrisprUtil that gets instantiated with a lookup table of letters and numberic codes
  */
     query_crispr.seq = util::string_to_bits(cmap, seq, pam_right);
@@ -491,14 +490,14 @@ std::string CrisprUtil::off_targets_by_seq(std::string seq, bool pam_right) {
     crispr_query_list.push_back(query_crispr);
 
     vodt = _find_off_targets( crispr_query_list, 1 );
-    
+
     cout << vodt.size() << " units" << "\n";
     if ( !vodt.empty() ) {
-       first_ot = vodt.front(); 
+       first_ot = vodt.front();
        ret_string = first_ot.off_target_summary;
     }
 
-    return ret_string;
+    return first_ot;
 }
 
 vector<ots_data_t> CrisprUtil::find_off_targets(uint64_t start, uint64_t amount, bool store_offs) {

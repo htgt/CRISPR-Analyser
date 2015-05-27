@@ -274,7 +274,7 @@ protected:
     }
 
     const string off_targets_by_seq(const MongooseRequest& request) {
-        string result;
+        ots_data_t result;
         string sequence;
         string species;
         string pam_right_param;
@@ -298,7 +298,7 @@ protected:
         }
 
         result = get_util(species)->off_targets_by_seq( sequence, pam_right);
-        jason_result = "{ \"data\": \"" + result + "\" }";
+        jason_result = util::to_string(result);
 
         return jason_result;
     }
