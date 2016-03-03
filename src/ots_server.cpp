@@ -325,7 +325,7 @@ protected:
             try {
                 id = stoull(ids[i]);
             }
-            catch (invalid_argument e) {
+            catch (const invalid_argument &e) {
                 throw runtime_error("id " + ids[i] + " not an integer");
             }
 
@@ -360,7 +360,7 @@ protected:
             try {
                 id = stoull(ids[i]);
             }
-            catch (invalid_argument e) {
+            catch (const invalid_argument &e) {
                 throw runtime_error("id " + ids[i] + " not an integer");
             }
 
