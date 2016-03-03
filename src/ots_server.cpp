@@ -320,7 +320,16 @@ protected:
         //should maybe change this to return an object of { id: sequence }
         for ( vector<string>::size_type i = 0; i < ids.size(); i++ ) {
             cerr << "Getting sequence for " << ids[i] << " (" << species << ")\n";
-            seqs.push_back( "'" + get_util(species)->get_crispr( stoull(ids[i]) ) + "'" );
+
+            unsigned long long id;
+            try {
+                id = stoull(ids[i]);
+            }
+            catch (const invalid_argument &e) {
+                throw runtime_error("id " + ids[i] + " not an integer");
+            }
+
+            seqs.push_back( "'" + get_util(species)->get_crispr(id) + "'" );
         }
 
         return util::to_json_array(seqs);
@@ -346,7 +355,16 @@ protected:
         vector<string> ids = util::split(ids_text);
 
         for ( vector<string>::size_type i = 0; i < ids.size(); i++ ) {
-            ids_all.push_back( stoull(ids[i]) );
+
+            unsigned long long id;
+            try {
+                id = stoull(ids[i]);
+            }
+            catch (const invalid_argument &e) {
+                throw runtime_error("id " + ids[i] + " not an integer");
+            }
+
+            ids_all.push_back(id);
         }
 
         vector<ots_data_t> offs = get_util(species)->find_off_targets(ids_all, true);
@@ -488,8 +506,14 @@ int main(int argc, char * argv[]) {
             //will be incredibly slow; this will prevent that by keeping it alive
             vector<uint64_t> matches;
             try {
-                CrisprUtil* util = server.get_util("human");
-                util->search_by_seq( "GTGTCAGTGAAACTTACTCT", 0, matches );
+                if (server.species_exists("human")) {
+                    CrisprUtil* util = server.get_util("human");
+                    util->search_by_seq( "GTGTCAGTGAAACTTACTCT", 0, matches );
+                }
+                else if (server.species_exists("mouse")) {
+                    CrisprUtil* util = server.get_util("mouse");
+                    util->search_by_seq( "TTAATTGTTTAGCAGTGTCA", 0, matches );
+                }
             }
             catch (const runtime_error& error) {
                 cout << "Error in search by seq test:\n";
