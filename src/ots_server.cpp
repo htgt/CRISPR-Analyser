@@ -488,14 +488,8 @@ int main(int argc, char * argv[]) {
             //will be incredibly slow; this will prevent that by keeping it alive
             vector<uint64_t> matches;
             try {
-                if (server.species_exists("human")) {
-                    CrisprUtil* util = server.get_util("human");
-                    util->search_by_seq( "GTGTCAGTGAAACTTACTCT", 0, matches );
-                }
-                else if (server.species_exists("mouse")) {
-                    CrisprUtil* util = server.get_util("mouse");
-                    util->search_by_seq( "TTAATTGTTTAGCAGTGTCA", 0, matches );
-                }
+                CrisprUtil* util = server.get_util("human");
+                util->search_by_seq( "GTGTCAGTGAAACTTACTCT", 0, matches );
             }
             catch (const runtime_error& error) {
                 cout << "Error in search by seq test:\n";
