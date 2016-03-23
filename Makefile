@@ -2,6 +2,11 @@ CC=g++
 CXXFLAGS=-std=c++0x -O3 -W -Wall -pedantic
 LIB=-pthread -ldl -Llib -lmongoose
 
+debug: CXXFLAGS += -O0 -DDEBUG -g
+debug: CCFLAGS += -O0 -DDEBUG -g
+debug: server crispr_analyser 
+
+
 SRCDIR:=src
 BUILDDIR:=build
 MONGOOSEDIR:=vpiotr-mongoose-cpp
