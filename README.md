@@ -124,6 +124,15 @@ You can now skip to the usage section unless you want to use more than 1 species
 
 Note: Each CRISPR in the index sits inside a 64bit integer, 40 bits are used to store the CRISPR and a single bit is used to store the strand (what we call pam_right). This leaves 23 bits in which you could store additional information about the crispr if you so chose (but I would recommend leaving at least 1 bit untouched because invalid crisprs are marked with all 64 bits set to 1.
 
+#####Downloadable index files
+
+We have made our index files availalble for download from:
+
+ftp://ftp.sanger.ac.uk/pub/teams/229/crispr_indexes/
+
+Locate the index you need (mouse or human are available) and ftp to your own system. Check results carefully to be sure the indexing
+is appropriate for the architicture of the computer processor you are using.
+
 #####Indexing a second species
 If you are storing the CRISPRs in a database, all CRISPRs must have a unique ID so to add a second species you must add one more flag:
 
