@@ -544,6 +544,9 @@ vector<ots_data_t> CrisprUtil::_find_off_targets(vector<crispr_t> queries, bool 
 
         cerr << "Finding off targets for " << queries[i].id+crispr_data.offset << endl;
 
+        // we want to store the first on-target match we find to use as crispr id
+        uint64_t on_target_id = 0;
+
         //iterate over every crispr checking for of targets
         for ( uint64_t j = 1; j <= crispr_data.num_seqs; j++ ) {
             //skip any sequences that are all A (i.e 0)
@@ -577,6 +580,10 @@ vector<ots_data_t> CrisprUtil::_find_off_targets(vector<crispr_t> queries, bool 
                     off_targets.push_back( j + crispr_data.offset );
                 }
             }
+
+            if( (mm == 0) & (on_target_id == 0) ){
+                on_target_id = j + crispr_data.offset;
+            }
         }
 
         cerr << "Found " << total_matches << " off targets.\n";
@@ -584,7 +591,21 @@ vector<ots_data_t> CrisprUtil::_find_off_targets(vector<crispr_t> queries, bool 
         //bulk mode won't use store offs as quickest is just to dump to stdout
         if ( store_offs ) {
             ots_data_t ots_data;
-            ots_data.id = queries[i].id+crispr_data.offset;
+            // When searching by seq the crispr ID is always 0
+            // In this case we replace the 0 ID with the first available
+            // 0 mismatch off-target ID
+            // Leave it as 0 if no exact match found
+            if(queries[i].id == 0){
+                if(on_target_id > 0){
+                    ots_data.id = on_target_id;
+                }
+                else{
+                    ots_data.id = 0;
+                }
+            }
+            else{
+                ots_data.id = queries[i].id+crispr_data.offset;
+            }
 
             //add the json array of off target ids or empty array
             if ( total_matches < max_offs ) {
