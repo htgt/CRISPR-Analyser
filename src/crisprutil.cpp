@@ -195,7 +195,7 @@ void CrisprUtil::search_by_seq(string seq, short pam_right, vector<uint64_t> & o
     //cerr << "Checked against " << crispr_data.num_seqs << " sequences" << endl;
     //cerr << "Skipped " << total_error << " sequences" << endl;
 
-    fprintf( stderr, "Scanning took %f seconds\n", ((float)t)/CLOCKS_PER_SEC );
+    //fprintf( stderr, "Scanning took %f seconds\n", ((float)t)/CLOCKS_PER_SEC );
 }
 
 //do speed comparison with crispr string
