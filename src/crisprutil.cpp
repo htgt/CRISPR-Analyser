@@ -532,6 +532,7 @@ vector<ots_data_t> CrisprUtil::_find_off_targets(vector<crispr_t> queries, bool 
     clock_t t = clock();
     //calculate each query individually
     for ( vector<crispr_t>::size_type i = 0; i < queries.size(); i++ ) {
+
         //make vector with 5000 slots reserved
         //should we do this outside the loop like summary?
         vector<uint64_t> off_targets;
@@ -548,12 +549,16 @@ vector<ots_data_t> CrisprUtil::_find_off_targets(vector<crispr_t> queries, bool 
         uint64_t on_target_id = 0;
 
         //iterate over every crispr checking for of targets
+        crispr_t query_crispr = queries[i];
+        uint64_t crispr_fwd = query_crispr.seq;
+        uint64_t crispr_rev = query_crispr.rev_seq;
         for ( uint64_t j = 1; j <= crispr_data.num_seqs; j++ ) {
+            uint64_t test_crispr = crisprs[j];
             //skip any sequences that are all A (i.e 0)
-            if ( crisprs[j] == ERROR_STR ) continue;
+            if ( test_crispr == ERROR_STR ) continue;
             //xor the two bit strings
             //try forward first
-            uint64_t match = queries[i].seq ^ crisprs[j];
+            uint64_t match = crispr_fwd ^ test_crispr;
 
 
             //we only care about the orientation that matches the orientation
@@ -565,7 +570,7 @@ vector<ots_data_t> CrisprUtil::_find_off_targets(vector<crispr_t> queries, bool 
             //which will match.
             if ( match & pam_on ) {
                 //orientations didnt match so we need to try the reverse
-                uint64_t match_r = queries[i].rev_seq ^ crisprs[j];
+                uint64_t match_r = crispr_rev ^ test_crispr;
                 mm = util::pop_count( match_r & pam_off );
             }
             else {
@@ -579,10 +584,12 @@ vector<ots_data_t> CrisprUtil::_find_off_targets(vector<crispr_t> queries, bool 
                 if ( ++total_matches < max_offs ) {
                     off_targets.push_back( j + crispr_data.offset );
                 }
-            }
 
-            if( (mm == 0) & (on_target_id == 0) ){
-                on_target_id = j + crispr_data.offset;
+                if(mm == 0){
+                    if (on_target_id == 0){
+                        on_target_id = j + crispr_data.offset;
+                    }
+                }
             }
         }
 
@@ -595,7 +602,7 @@ vector<ots_data_t> CrisprUtil::_find_off_targets(vector<crispr_t> queries, bool 
             // In this case we replace the 0 ID with the first available
             // 0 mismatch off-target ID
             // Leave it as 0 if no exact match found
-            if(queries[i].id == 0){
+            if(query_crispr.id == 0){
                 if(on_target_id > 0){
                     ots_data.id = on_target_id;
                 }
@@ -604,7 +611,7 @@ vector<ots_data_t> CrisprUtil::_find_off_targets(vector<crispr_t> queries, bool 
                 }
             }
             else{
-                ots_data.id = queries[i].id+crispr_data.offset;
+                ots_data.id = query_crispr.id+crispr_data.offset;
             }
 
             //add the json array of off target ids or empty array
@@ -622,7 +629,7 @@ vector<ots_data_t> CrisprUtil::_find_off_targets(vector<crispr_t> queries, bool 
 
         //output is:
         //crispr_id,species_id,off_targets,off_target_summary
-        cout << (queries[i].id+crispr_data.offset) << "\t" << int(crispr_data.species_id) << "\t";
+        cout << (query_crispr.id+crispr_data.offset) << "\t" << int(crispr_data.species_id) << "\t";
 
         //print off targets
         if ( total_matches < max_offs ) {
