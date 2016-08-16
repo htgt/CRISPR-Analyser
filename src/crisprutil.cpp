@@ -644,7 +644,7 @@ vector<ots_data_t> CrisprUtil::_find_off_targets(vector<crispr_t> queries, bool 
 
     t = clock() - t;
 
-    fprintf( stderr, "Took %f seconds\n", ((float)t)/CLOCKS_PER_SEC );
+    //fprintf( stderr, "Took %f seconds\n", ((float)t)/CLOCKS_PER_SEC );
 
     return results;
 }
