@@ -449,9 +449,13 @@ vector<ots_data_t> CrisprUtil::find_off_targets(vector<uint64_t> ids, bool store
 
     for ( auto i = ids.begin(); i < ids.end(); i++ ) {
         crispr_t crispr;
+        if (*i < crispr_data.offset){
+            cerr << *i << " is an invalid id (too low). Wrong species?" << "\n";
+            throw runtime_error("Index out of bounds");
+        }
         crispr.id = *i - crispr_data.offset; //subtract offset to get the right number
         if ( crispr.id > crispr_data.num_seqs ) {
-            cerr << crispr.id << " is an invalid id. Wrong species?" << "\n";
+            cerr << crispr.id << " is an invalid id (too high). Wrong species?" << "\n";
             throw runtime_error("Index out of bounds");
         }
 
