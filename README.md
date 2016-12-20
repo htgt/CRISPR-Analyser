@@ -59,8 +59,9 @@ You will also want some indexes/constraints:
 ALTER TABLE ONLY crisprs_mouse ADD CONSTRAINT crisprs_mouse_unique_loci UNIQUE (chr_start, chr_name, pam_right);
 CREATE INDEX idx_crisprs_mouse_loci ON crisprs_mouse USING btree (chr_name, chr_start);
 ```
+For speed of loading data, it is bets to add these optimisations after you have loaded the crispr data from csv. If possible use a COPY command as the Postgres user as this is much faster than the clinet server \copy equivalent.
 
-If you are using inheritance each timeyou add a new species crispr table you need to add a primary key:
+If you are using inheritance each time you add a new species crispr table you need to add a primary key:
 ```sql
 alter table crisprs_dog add constraint crisprs_dog_pkey primary key (id);
 ```
@@ -148,6 +149,11 @@ For example, to add the second species you should start the CRISPR ids in your d
 
 Meaning 300,000,000 should be subtracted from whatever ID is given to get a species localised ID, as 300,000,001 here corresponds to Mouse CRISPR 1
 
+Note that the right way to do this in Postgres is to set the starting pont of the sequence before loading your next set CRISPRs for the new genome.
+
+```
+ALTER SEQUENCE crisprs_id_seq RESART WITh 300000000
+```
 ##Usage
 
 ###Retrieve an ID given a gRNA
