@@ -1,6 +1,6 @@
-#CRISPR Analyser
+# CRISPR Analyser
 
-##Summary
+## Summary
 This module is a collection of C++ scripts that has the primary function of finding off targets for a CRISPR site as quick as possible, for any species. This is achieved by: 
 
 1. Creating an index of every CRISPR site within the target genome 
@@ -23,12 +23,12 @@ If you have any issues/feature requests please create an issue on github. If you
 Bin Shen, Wensheng Zhang, Jun Zhang, Jiankui Zhou, Jianying Wang, Li Chen, Lu Wang, Alex Hodgkins, Vivek Iyer, Xingxu Huang & William C Skarnes (2014) Efficient genome modification by CRISPR-Cas9 nickase with minimal off-target effects. doi:10.1038/nmeth.2857
 ```
 
-##Speed
+## Speed
 The initial load time of the index will depend entirely on the speed of the disk you store it on. An index will be 2-3gb which is _all_ loaded into memory; for us this usually takes about 5 seconds per index. This is quite high if you are searching for a single CRISPR at a time, so generally I recommend using the server so you only have to load the index once.
 
 Once the application has loaded all the CRISPRs into memory it usually takes 2-4 seconds to find all off targets with up to 4 mismatches for a gRNA. The program can be easily modified to check for more than 4 mismatches, but it was not feasible for us to store off targets with any more than 4 mismatches in our database.
 
-##Database
+## Database
 You will want to create a postgres database to store the actual CRISPR data, here is our CRISPR table:
 
 ```sql
@@ -70,7 +70,7 @@ Or finding a CRISPR by ID will run incredibly slowly.
 
 You can see how to populate this table in the next section
 
-##Build
+## Build
 The actual build step is very simple, and simply requires running make:
 
 ```
@@ -81,7 +81,7 @@ make
 
 But before the program can be used you must create an index:
 
-###Find all CRISPRs within the genome
+### Find all CRISPRs within the genome
 This has now been integrated into the crispr_analyser under the 'gather' command. Run './bin/crispr_analyser gather' to see all possible options
 
 This step produces a .csv of all CRISPRs in a given genome, which can be run directly into a psql copy statement to quickly add rows to a table. The output .csv file is used in the next step to generate the index. Once the index has been created and the rows inserted into your database this file can be deleted.
@@ -102,7 +102,7 @@ You can then load this into your database in psql:
 
 and now you can create an index:
 
-###Create index
+### Create index
 Once you have generated the csv file(s) above you can give them to the crispr_analyser index command with the -i flag:
 
 ```
@@ -125,7 +125,7 @@ You can now skip to the usage section unless you want to use more than 1 species
 
 Note: Each CRISPR in the index sits inside a 64bit integer, 40 bits are used to store the CRISPR and a single bit is used to store the strand (what we call pam_right). This leaves 23 bits in which you could store additional information about the crispr if you so chose (but I would recommend leaving at least 1 bit untouched because invalid crisprs are marked with all 64 bits set to 1.
 
-#####Downloadable index files
+##### Downloadable index files
 
 We have made our index files availalble for download from:
 
@@ -134,7 +134,7 @@ ftp://ftp.sanger.ac.uk/pub/teams/229/crispr_indexes/
 Locate the index you need (mouse or human are available) and ftp to your own system. Check results carefully to be sure the indexing
 is appropriate for the architicture of the computer processor you are using.
 
-#####Indexing a second species
+##### Indexing a second species
 If you are storing the CRISPRs in a database, all CRISPRs must have a unique ID so to add a second species you must add one more flag:
 
 <pre>
@@ -154,9 +154,9 @@ Note that the right way to do this in Postgres is to set the starting pont of th
 ```
 ALTER SEQUENCE crisprs_id_seq RESART WITh 300000000
 ```
-##Usage
+## Usage
 
-###Retrieve an ID given a gRNA
+### Retrieve an ID given a gRNA
 You can find all possible ids for a given gRNA with the search command:
 
 ```
@@ -173,7 +173,7 @@ Found the following matches:
 	245377736
 </pre>
 
-###Find off targets
+### Find off targets
 Finding off targets requires IDs rather than sequence:
 
 ```
@@ -203,7 +203,7 @@ Which is TSV data with 4 columns:
 
 With the intention being that the output fields are dumped straight into your database
 
-##Server Usage
+## Server Usage
 The server supports returns JSON or JSONP if a callback is given. 
 
 The server has two modes of operation:
@@ -211,7 +211,7 @@ The server has two modes of operation:
 1. Finding off targets given an id (or ids)
 2. Retrieving an id given a single 20bp gRNA sequence
 
-###Start the server
+### Start the server
 The server comes with a config file in conf/indexes.conf. You will want to edit this to add whatever species you would like to load. The format is species = index_file, like so:
 ```
 human = /lustre/scratch110/sanger/team87/crispr_indexes/GRCh37_index.bin
@@ -236,7 +236,7 @@ The full options:
 
 If you are at sanger using the default config file should be fine as our indexes are world viewable on lustre. 
 
-###Off target searching
+### Off target searching
 To find off targets there are two required parameters:
 
 - ids - this can be a single id, or multiple can be specified in a comma separated string, like "253453634,23645743,473539233"
@@ -272,10 +272,10 @@ Which will return the following wrapped in a callback:
 }
 ```
 
-#####Multiple IDs:
+##### Multiple IDs:
 [http://localhost:8080/api/off_targets?ids=245377726,245377730&species=human]([http://localhost:8080/api/off_targets?ids=245377726,245377730&species=human)
 
-###Get the sequence for a given ID
+### Get the sequence for a given ID
 Thanks to coronin for writing this method. If you don't want to set up a database, you can have the ots server give you the sequence for a given CRISPR using the id api call like so:
 
 ```
@@ -284,7 +284,7 @@ $.getJSON('http://localhost:8080/api/id?callback=?', {ids: "245377736", species:
 
 Multiple ids can be specified by providing a comma separated string as in the off target example above.
 
-###Sequence searching
+### Sequence searching
 Sequence searching works in a very similar way:
 
 Viewing the JSON by going straight to the URL:
