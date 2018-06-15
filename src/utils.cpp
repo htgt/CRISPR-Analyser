@@ -119,7 +119,8 @@ namespace util {
         //bit complement here maps A -> T, G -> C etc.
         text = ~text & mask;
 
-        uint64_t reversed = 0;
+        //start the reversed encoding off with the flipped PAM position
+        uint64_t reversed = text >> (size * 2);
         int shift = 0;
 
         //now reverse the sequence, 2 bits at a time
@@ -200,3 +201,4 @@ namespace util {
     Written by Alex Hodgkins (ah19@sanger.ac.uk) in 2014
     Some code taken from scanham written by German Tischler
 */
+
