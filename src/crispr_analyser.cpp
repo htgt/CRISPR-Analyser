@@ -129,7 +129,7 @@ int search_usage() {
     fprintf(stderr, "Usage: crispr_analyser search [options] <ids>\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "Options: -i FILE    The file containing the CRISPR index, (from the index step)\n");
-    fprintf(stderr, "         -s int     The CRISPR sequence to search for (must be 20bp)\n");
+    fprintf(stderr, "         -s TEXT    The CRISPR sequence to search for (must be 20bp)\n");
     fprintf(stderr, "         -p int     Placement of the PAM relative to the sequence. Default is to ignore PAM\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "For example:\n\n");
@@ -254,7 +254,7 @@ int search(int argc, char * argv[]) {
     vector<uint64_t> matches;
 
     int c = -1;
-    while ( (c = getopt(argc, argv, "s:n:i:")) != -1 ) {
+    while ( (c = getopt(argc, argv, "s:n:i:p:")) != -1 ) {
         switch ( c ) {
             case 'p': pam_right = atoi( optarg ); break;
             case 's': seq = optarg; break;
