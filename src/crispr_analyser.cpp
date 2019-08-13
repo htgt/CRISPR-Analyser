@@ -126,10 +126,12 @@ int align_usage() {
 
 int search_usage() {
     fprintf(stderr, "\n");
-    fprintf(stderr, "Usage: crispr_analyser search [options] <ids>\n");
+    fprintf(stderr, "Usage: crispr_analyser search [options]\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "Options: -i FILE    The file containing the CRISPR index, (from the index step)\n");
     fprintf(stderr, "         -s TEXT    The CRISPR sequence to search for (must be 20bp)\n");
+    fprintf(stderr, "         -f FILE    An alternate to -s, a file containing multiple CRISPR\n");
+    fprintf(stderr, "                    sequences to search for (one per line, 20bp each)\n");
     fprintf(stderr, "         -p int     Placement of the PAM relative to the sequence. Default is to ignore PAM\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "For example:\n\n");
@@ -250,14 +252,15 @@ int index(int argc, char * argv[]) {
 int search(int argc, char * argv[]) {
     string index = "";
     string seq = "";
+    string seq_file = "";
     short pam_right = 2;
-    vector<uint64_t> matches;
 
     int c = -1;
-    while ( (c = getopt(argc, argv, "s:n:i:p:")) != -1 ) {
+    while ( (c = getopt(argc, argv, "s:f:n:i:p:")) != -1 ) {
         switch ( c ) {
             case 'p': pam_right = atoi( optarg ); break;
             case 's': seq = optarg; break;
+            case 'f': seq_file = optarg; break;
             case 'i': index = optarg; break;
             case '?': return search_usage();
         }
@@ -268,21 +271,59 @@ int search(int argc, char * argv[]) {
         return search_usage();
     }
 
-    if ( seq == "" || seq.size() != 20 ) {
+    if ( (seq == "" || seq.size() != 20) && seq_file == "") {
         cerr << "A 20bp sequence must be specified with -s" << endl;
+        return search_usage();
+    }
+
+    if ( seq != "" && seq_file != "" ) {
+        cerr << "Cannot specify both a sequence and a sequence input file" <<endl;
         return search_usage();
     }
 
     CrisprUtil finder = CrisprUtil();
     finder.load_binary( index );
-    finder.search_by_seq( seq, pam_right, matches );
 
-    if ( matches.size() ) {
-        cout << "Found the following matches:" << endl;
+    if ( seq_file == "" ) {
+        vector<uint64_t> matches;
+        finder.search_by_seq( seq, pam_right, matches );
+        if ( matches.size() ) {
+            cout << "Found the following matches:" << endl;
 
-        for ( uint i = 0; i < matches.size(); ++i ) {
-            cout << "\t" << matches[i] << endl;
+            for ( uint i = 0; i < matches.size(); ++i ) {
+                cout << "\t" << matches[i] << endl;
+            }
         }
+    }
+    else {
+        ifstream in(seq_file);
+        if ( !in.good() ) {
+            cerr << "Cannot read input file '" << seq_file << "'" << endl;
+            return 1;
+        }
+        uint64_t line = 0;
+        while ( std::getline(in, seq) ) {
+            ++line;
+            if ( seq.size() == 0 ) {
+                continue;
+            }
+            else if ( seq.size() != 20 ) {
+                cerr << "'" << seq << "' is not a valid guide RNA on line " << line << endl;
+                continue;
+            }
+            vector<uint64_t> matches;
+            finder.search_by_seq( seq, pam_right, matches );
+            if ( matches.size() ) {
+                cout << seq << ":" << endl;
+                for ( uint i = 0; i < matches.size(); ++i ) {
+                    cout << "\t" << matches[i] << endl;
+                }
+            }
+            else {
+                cerr << "No matches for " << seq << " on line " << line << endl;
+            }
+        }
+        in.close();
     }
 
     return 1;
