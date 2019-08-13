@@ -326,7 +326,7 @@ int search(int argc, char * argv[]) {
         in.close();
     }
 
-    return 1;
+    return 0;
 }
 
 int align(int argc, char * argv[]) {
