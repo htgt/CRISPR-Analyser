@@ -290,7 +290,7 @@ int search(int argc, char * argv[]) {
         if ( matches.size() ) {
             cout << "Found the following matches:" << endl;
 
-            for ( uint i = 0; i < matches.size(); ++i ) {
+            for ( uint32_t i = 0; i < matches.size(); ++i ) {
                 cout << "\t" << matches[i] << endl;
             }
         }
@@ -315,7 +315,7 @@ int search(int argc, char * argv[]) {
             finder.search_by_seq( seq, pam_right, matches );
             if ( matches.size() ) {
                 cout << seq << ":" << endl;
-                for ( uint i = 0; i < matches.size(); ++i ) {
+                for ( uint32_t i = 0; i < matches.size(); ++i ) {
                     cout << "\t" << matches[i] << endl;
                 }
             }

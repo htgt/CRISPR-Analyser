@@ -258,7 +258,7 @@ protected:
         //result += "<br />Seq is: " + seq;
         result += "<br />Found " + to_string(matches.size()) + " matches:";
 
-        for ( uint i = 0; i < matches.size(); i++ ) {
+        for ( uint32_t i = 0; i < matches.size(); i++ ) {
             result += "<br />" + to_string(matches[i]);
         }
 
@@ -369,7 +369,7 @@ protected:
 
         vector<ots_data_t> offs = get_util(species)->find_off_targets(ids_all, true);
 
-        for ( uint i = 0; i < offs.size(); ++i ) {
+        for ( uint32_t i = 0; i < offs.size(); ++i ) {
             if ( i > 0 ) result += ",";
             //we use my to_string here as its a struct we want a string of
             result += "\"" + to_string(offs[i].id) + "\":" + util::to_string(offs[i]);

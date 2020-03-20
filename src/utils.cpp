@@ -95,7 +95,7 @@ namespace util {
     }
 
     void lc(std::string & str) {
-        for ( uint i = 0; i < str.length(); ++i ) {
+        for ( uint32_t i = 0; i < str.length(); ++i ) {
             str[i] = tolower(str[i]);
         }
     }
