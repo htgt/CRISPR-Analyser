@@ -38,8 +38,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <cstdlib>
+#include <iomanip>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <string>
 #include <vector>
 #include <signal.h>
@@ -398,7 +400,9 @@ protected:
     }
 
     string json_error(string& s) {
-        return "{\"error\":\"" + s + "\"}";
+        ostringstream oss;
+        oss << "{\"error\":" << quoted(s) << "}";
+        return oss.str();
     }
 };
 

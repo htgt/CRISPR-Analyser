@@ -1,5 +1,5 @@
 CC=g++
-CXXFLAGS=-std=c++0x -O3 -W -Wall -pedantic
+CXXFLAGS=-std=c++14 -O3 -W -Wall -pedantic
 LIB=-pthread -ldl -Llib -lmongoose
 
 debug: CXXFLAGS += -O0 -DDEBUG -g
